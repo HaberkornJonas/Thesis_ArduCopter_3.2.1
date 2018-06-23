@@ -25,14 +25,15 @@ const uint32_t _baudrates[] PROGMEM = {4800U, 38400U, 115200U, 57600U, 9600U};
 //Thesis - Global variables *****************************
 int Rx;
 int counter = 0;
+bool moduleConnected = false;
 
 char* message = new char[BUFFERSIZE];
 bool connection_established = false;
-int module_number = 0;
 
 
 //Thesis - Functions ************************************
 void send_data(void);
+void clean_connect_data(void);
 void rb_put(char car);
 char rb_get(void);
 int rb_status(void);

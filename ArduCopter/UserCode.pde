@@ -31,9 +31,13 @@ void userhook_FastLoop()
         } 
         hal.uartC->printf("ok");
     }else {
-        if(port->available()) {
+        while(port->available()) {
             connection_established = true;
+            char data = hal.uartC->read();
+            rb_put(data);
         }
+        if(connection_established)
+            clean_connect_data();
         hal.uartC->printf("ok");
     }
 
@@ -68,6 +72,15 @@ void userhook_SlowLoop()
     //Communication Test
     //const Location loc = current_loc;
     //hal.console->printf_P(PSTR("\nThesis mes nr:%d: / lng:%lf: / lat:%lf: / alt:%lf: / Module nr:%d: / param1:%d: / param2:%d: / param3:%d:;\n"), counter++, (loc.lng/(double)1E7), (loc.lat/(double)1E7), (double)(loc.alt/(double)100), module_number, 0, 10, 100);
+
+    const Location loc = current_loc;
+    if(moduleConnected)
+        moduleConnected = false;
+    else
+    {
+        hal.console->printf_P(PSTR("\nThesis:%d:/:%.7f:/:%.7f:/:%.2f:/:0:;"), counter++, (double)(loc.lng/(double)1E7), (double)(loc.lat/(double)1E7), (double)(loc.alt/(double)100));
+        connection_established = false;
+    }
 }
 #endif
 
@@ -98,14 +111,21 @@ void send_data(){
     }
     if(message[0] == ':')
     {
-        module_number = message[1]-'0';
         //hal.console->printf_P(PSTR("\Test:%.7f:/:%.7f:\n"), (double)(gps.location().lng/(double)10000000), (double)(gps.location().lat/(double)10000000));
         hal.console->printf_P(PSTR("\nThesis:%d:/:%.7f:/:%.7f:/:%.2f:/%s"), counter++, (double)(loc.lng/(double)1E7), (double)(loc.lat/(double)1E7), (double)(loc.alt/(double)100), message);
     }
     Rx = 0;
 }
 
-
+void clean_connect_data(){
+    int i = 0;
+    char tmp;
+    do {
+        tmp = rb_get();
+        message[i] = tmp;
+        i++;
+    }while(tmp == '\0');
+}
 
 
 struct ringbuffer
@@ -127,6 +147,7 @@ void rb_put(char c)
 	{
 		Rx=1;
 	}
+    moduleConnected = true;
 }
 
 char rb_get()
